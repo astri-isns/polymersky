@@ -1,4 +1,4 @@
-# \<polymersky-app\>
+# polymersky
 
 Polymer Element for Skygear
 
