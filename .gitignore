@@ -1,3 +1,5 @@
+.DS_STORE
+
 # Logs
 logs
 *.log
@@ -35,3 +37,13 @@ jspm_packages
 
 # Optional REPL history
 .node_repl_history
+
+# Generated files/folders
+*.pyc
+app/css/*
+dist
+build
+
+# Dev directories
+bower_components
+node_modules
