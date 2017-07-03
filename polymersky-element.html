@@ -1,0 +1,176 @@
+<!-- IN DEVELOPMENT, DO NOT USE -->
+<!-- this is skygear element for Polymer 2.0 -->
+<link rel="import" href="../polymer/polymer-element.html">
+
+<dom-module id="polymersky-element">
+  <template>
+    <style>
+       :host {
+        display: block;
+      }
+    </style>
+  </template>
+
+  <script src="https://code.skygear.io/js/polyfill/latest/polyfill.min.js"></script>
+  <script src="https://code.skygear.io/js/skygear/latest/skygear.min.js"></script>
+
+  <script>
+    /**
+     * `polymersky-element`
+     *
+     *
+     * @customElement;
+     * @polymer
+     * @demo demo/index.html
+     */
+    class PolymerskyElement extends Polymer.Element {
+      static get is() { return 'polymersky-element'; }
+
+      //private function, for initialization
+      _computeApp(name, endPoint, apiKey) {
+        if (endPoint && apiKey) {
+          skygear.onUserChanged(() => {
+            this.notifyPath('app.currentUser.id');
+          });
+          var ctx = this;
+          skygear.config({
+            'endPoint': endPoint, // trailing slash is required
+            'apiKey': apiKey,
+          }).then(function (container) {
+            if (skygear.currentUser) {
+              //  this.currentUser = skygear.currentUser;
+              // console.log('skygear.currentUser found');
+              console.log('skygear.currentUser: ' + skygear.currentUser.id);
+              ctx.notifyPath('app.currentUser.id');
+            }
+            console.log('skygear container is now ready for making API calls.');
+          }, function (error) {
+            console.error(error);
+          });
+
+        } else {
+          return null;
+        }
+
+        return skygear;
+      }
+
+      whoAmI() {
+        skygear.whoami().then((user) => {
+          console.log(`Oh. I am ${user.id}.`);
+          // this.currentUser = user;
+          // this.user = user;
+          return user;
+        }, (err) => {
+          alert('error:' + err);
+        });
+      }
+
+      signOut() {
+        this.user = null;
+        return skygear.logout().then(() => {
+          console.log('logout successfully');
+        }, (error) => {
+          console.error(error);
+        });
+      }
+
+      readFromPublicDatabase(recordType, successHandler, errorHandler){
+          const Record = skygear.Record.extend(recordType);
+          const Query = new skygear.Query(Record);
+
+          this.app.publicDB.query(Query)
+          .then(successHandler(records), errorHandler(error));
+      }
+
+
+      //for calling skygear cloud functions (aka lambda function)
+      lambda(functionName, params, responseHandler){
+        this.app.lambda(functionName, params).then(response => {
+          responseHandler(response);
+        });
+      }
+
+      saveToPublicDatabase(recordType, content, successHandler, errorHandler){
+          var record = skygear.Record.extend(recordType);
+          this.app.publicDB.save(new record(content))
+          .then(successHandler(record))
+          .catch(errorHandler(error));
+      }
+
+      loginWithEmail(email, password, successHandler, errorHandler){
+        skygear.loginWithEmail(email, password)
+        .then(successHandler(user), errorHandler(error));
+      }
+
+
+      //Depreated
+      loginWithEmail(email, password) {
+        skygear.loginWithEmail(email, password).then((user) => {
+          console.log(user); // user object
+        }, (error) => {
+          console.error(error);
+          if (error.error.code === skygearError.InvalidCredentials ||
+            error.error.code === skygearError.ResourceNotFound) {
+            // incorrect username or password
+          } else {
+            // other kinds of error
+          }
+        });
+      }
+
+      signupWithEmail(email, password, successHandler, errorHandler){
+          skygear.signupWithEmail(email, password)
+          .then(successHandler(user), errorHandler(error));
+      }
+
+      //Deprecated
+      signupWithEmail(email, password) {
+        skygear.signupWithEmail(email, password).then((user) => {
+          console.log(user); // user object
+        }, (error) => {
+          console.error(error);
+          if (error.error.code === skygearError.Duplicated) {
+            // the email has already existed
+          } else {
+            // other kinds of error
+          }
+        });
+      }
+
+      //Ready Function
+      ready() {
+        console.log("ready");
+      }
+
+      static get properties() {
+        return {
+          // prop1: {
+          //   type: String,
+          //   value: 'polymersky-element'
+          // },
+          name: {
+            type: String,
+            value: ''
+          },
+          apiKey: { 
+            type: String
+          },
+          endPoint: {
+            type: String
+          },
+          app: {
+            type: Object,
+            notify: true,
+            computed: '_computeApp(name, endPoint, apiKey)'
+          }
+
+
+        };
+      }
+    }
+
+    window.customElements.define(PolymerskyElement.is, PolymerskyElement);
+  </script>
+</dom-module>
+
